@@ -529,6 +529,7 @@ partial interface RTCRtpTransceiver {
     <pre class="idl">partial dictionary RTCRtpEncodingParameters {
       unsigned long ptime;
       boolean adaptivePtime = false;
+      boolean requestKeyframe = false;
     };</pre>
     <h2>Dictionary {{RTCRtpEncodingParameters}} Members</h2>
     <dl data-link-for="RTCRtpEncodingParameters" data-dfn-for="RTCRtpEncodingParameters" class="dictionary-members">
@@ -561,6 +562,14 @@ partial interface RTCRtpTransceiver {
         of increased latency. Changing the frame length dynamically
         allows the <a>user agent</a> to adapt its bandwidth allocation strategy
         based on the current network conditions.</p>
+      </dd>
+      <dt><dfn data-idl>requestKeyframe</dfn> of type <span class="idlMemberType">boolean</span>, defaulting to <code>false</code>.</dt>
+      <dd>
+        <p>When set to true, request that RTCRtpSender's encoder generates a keyframe for the encoding.</p>
+        <p>
+          In the steps to call the {{setParameters}} method modify the step to validate parameters and remove {{requestKeyframe}} if [= transceiver kind =] is `"audio"`.
+         </p>
+        <p class="note">Requesting a keyframe may be ignored by encoder or may trigger keyframes for encodings other than the one for which a keyframe was requested.</p>
       </dd>
     </dl>
   </section>
