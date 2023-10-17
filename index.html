@@ -1273,10 +1273,187 @@ partial interface RTCRtpTransceiver {
       </p>
     </section>
   </section>
+  <section id="encoder-decoder-errors">
+    <h2>Exposing encoder and decoder errors to the application</h2>
+    <p>
+      The encoding and decoding of (primarily video) frames can occasionally fail for a number of reasons.
+      In those cases the user agent may fallback from a hardware encoder/decoder to a software decoder with
+      lower performance or may loose to a hardware encoder/decoder without being able to fallback to software.
+      In such cases the application needs to be informed and take action such as renegotiation a different
+      set of codecs.
+      <p class="note">This excludes issues like the loss of packets/slices in a frame or not receiving
+        a decodable frame for a certain amount of time that are typically handled by sending RTCP feedback
+        such as NACK or PLI to the other side.
+      </p>
+    </p>
+    <section id="encoder-decoder-errors-extensions">
+      <h3>
+        {{RTCRtpSender}} and {{RTCRtpReceiver}} interface extensions
+      </h3>
+      <div>
+        <pre class="idl">[Exposed=Window]
+partial interface RTCRtpSender {
+  attribute EventHandler error;
+};
+partial interface RTCRtpReceiver {
+  attribute EventHandler error;
+};</pre>
+      </div>
+    </section>
+    <section id="encoder-errors-interface">
+      <h2>
+        RTCRtpSender {{RTCRtpSender/error}} definition
+      </h2>
+      <p>
+        The {{RTCRtpSender/error}} event uses the {{RTCRtpSenderErrorEvent}} interface.
+      </p>
+      <div>
+        <pre class="idl">[Exposed=Window]
+interface RTCRtpSenderErrorEvent : Event {
+  constructor(DOMString type, RTCRtpSenderErrorEventInit eventInitDict);
+  readonly attribute unsigned long? spatialIndex;
+  readonly attribute unsigned long rtpTimestamp;
+  readonly attribute unsigned short errorCode;
+  readonly attribute USVString errorText;
+};</pre>
+      </div>
+      <div>
+        <pre class="idl">
+dictionary RTCRtpSenderErrorEventInit : EventInit {
+  unsigned long? spatialIndex;
+  unsigned long rtpTimestamp;
+  unsigned short errorCode;
+  USVString errorText;
+};</pre>
+        <section id="rtcrtpsendererroreventinit">
+          <h4>Dictionary <dfn>RTCRtpSenderErrorEventInit</dfn> Members</h4>
+          <dl data-link-for="RTCRtpSenderErrorEventInit" data-dfn-for="RTCRtpSenderErrorEventInit"
+            class="dictionary-members">
+            <dt>
+              <dfn>spatialIndex</dfn> of type <span class="idlAttrType">unsigned long</span>, optional
+            </dt>
+            <dd>
+              <p>
+                When simulcast is used, this is the spatial index of the layer on which the error occured.
+                Unset when simulcast is not used, unset for SVC.
+              </p>
+            </dd>
+            <dt>
+              <dfn>rtpTimestamp</dfn> of type <span class="idlAttrType">unsigned long</span>, required
+            </dt>
+            <dd>
+              <p>
+                The RTP timestamp that would have been associated with the frame if it had been sent over the network.
+              </p>
+            </dd>
+            <dt>
+              <dfn>errorCode</dfn> of type <span class="idlAttrType">unsigned short</span>, required
+            </dt>
+            <dd>
+              <p>
+                An implementation-specific numeric error code used to differentiate error causes.
+              </p>
+            </dd>
+            <dt>
+              <dfn>errorText</dfn> of type <span class="idlAttrType">USVString</span>, required
+            </dt>
+            <dd>
+              <p>
+                An implementation-specific human-readable description of the error.
+              </p>
+            </dd>
+          </dl>
+        </section>
+      </div>
+    </section>
+    <section id="decoder-errors-interface">
+      <h2>
+        RTCRtpReceiver {{RTCRtpReceiver/error}} definition
+      </h2>
+      <p>
+        The {{RTCRtpReceiver/error}} event uses the {{RTCRtpReceiverErrorEvent}} interface.
+      </p>
+      <div>
+        <pre class="idl">[Exposed=Window]
+interface RTCRtpReceiverErrorEvent : Event {
+  constructor(DOMString type, RTCRtpReceiverErrorEventInit eventInitDict);
+  readonly attribute unsigned long rtpTimestamp;
+  readonly attribute unsigned short errorCode;
+  readonly attribute USVString errorText;
+};</pre>
+      </div>
+      <div>
+        <pre class="idl">
+dictionary RTCRtpReceiverErrorEventInit : EventInit {
+  unsigned long rtpTimestamp;
+  unsigned short errorCode;
+  USVString errorText;
+};</pre>
+        <section id="rtcrtpreceivererroreventinit">
+          <h4>Dictionary <dfn>RTCRtpReceiverErrorEventInit</dfn> Members</h4>
+          <dl data-link-for="RTCRtpReceiverErrorEventInit" data-dfn-for="RTCRtpReceiverErrorEventInit"
+            class="dictionary-members">
+            <dt>
+              <dfn>rtpTimestamp</dfn> of type <span class="idlAttrType">unsigned long</span>, required
+            </dt>
+            <dd>
+              <p>
+                The RTP timestamp of the frame that caused the decode error.
+              </p>
+            </dd>
+            <dt>
+              <dfn>errorCode</dfn> of type <span class="idlAttrType">unsigned short</span>, required
+            </dt>
+            <dd>
+              <p>
+                An implementation-specific numeric error code used to differentiate error causes.
+              </p>
+            </dd>
+            <dt>
+              <dfn>errorText</dfn> of type <span class="idlAttrType">USVString</span>, required
+            </dt>
+            <dd>
+              <p>
+                An implementation-specific human-readable description of the error.
+              </p>
+            </dd>
+          </dl>
+        </section>
+      </div>
+    </section>
+    <section class="informative">
+      <h2>Event summary</h2>
+      <p>The following events fire on {{RTCRtpSender}} and {{RTCRtpReceiver}} objects:</p>
+      <table class="simple">
+        <thead>
+          <tr>
+            <th>Event name</th>
+            <th>Interface</th>
+            <th>Fired when...</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope=row><dfn data-dfn-for="RTCRtpSender" data-dfn-type=event></dfn>error</th>
+            <td>{{RTCRtpSenderErrorEventInit}}</td>
+            <td>
+              The encoder associated with the {{RTCRtpSender}} encountered an error while encoding a frame.
+            </td>
+          </tr>
+          <tr>
+            <th scope=row><dfn data-dfn-for="RTCRtpReceiver" data-dfn-type=event></dfn>error</th>
+            <td>{{RTCRtpReceiverErrorEventInit}}</td>
+            <td>
+              The decoder associated with the {{RTCRtpReceiver}} encountered an error while decoding a frame.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </section>
   <section class="informative">
     <h2>Event summary</h2>
-    <p>
-      The following events fire on {{RTCIceTransport}} objects:</p>
+    <p>The following events fire on {{RTCIceTransport}} objects:</p>
     <table class="simple">
       <thead>
         <tr>
